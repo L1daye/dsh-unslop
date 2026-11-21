@@ -83,11 +83,22 @@ pwsh -File .\install.ps1             # 复制进 profile、登记 bundle
 - `unslop_snapshot` 需要 Playwright + Chromium；`unslop_story` 需要 ffmpeg。
 - 两者**不装也能用**核心审计流程；缺时 `unslop_status` 会标出来，`unslop_deps {install:true}` 会跑 `npm install -D playwright` + `npx playwright install chromium`。
 
+## 兼容性
+
+目标 DSH 客户端为 **0.2.2 系列**（`engines.dsh: >=0.2.2-rc.1`）：
+
+| DSH 客户端 | 平台 | 状态 |
+|---|---|---|
+| `0.2.2-rc.1` | Windows | ✅ 本机实测：Host 半 / 3 个 `unslop_*` 工具 / `/unslop/api/*` 路由 / 输入框 chip 均与该版本已跑的 rust-anything 同一套内部接口 |
+| `0.2.2-rc.3` | Windows | ✅ 端到端验证（Host + MCP + skill + chip） |
+
+插件依赖若干净内部接口：`ctx.tools.register`、`ctx.inject(['webServer'])` / `webServer.register({kind:'exact'})`、`ctx.workingDirectory`、`ctx.slots.inject('conversation.input.left', …)`、`window.__ModuleLoader__.load`。DSH 升级可能改变它们——升级后先跑 `npm test` 再看 `unslop_status`。
+
 ## 测试
 
 ```powershell
 cd dsh-unslop
-npm test        # smoke.mjs + hosttest.mjs，不装 Harness，用桩 ctx
+npm test        # smoke.mjs + hosttest.mjs + routetest.mjs，不装 Harness，用桩 ctx
 ```
 
 ## 许可

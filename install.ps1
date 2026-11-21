@@ -63,7 +63,7 @@ if ($DryRun) {
 } else {
   New-Item -ItemType Directory -Force -Path (Join-Path $profileDir 'node_modules') | Out-Null
   if (Test-Path $target) { Move-Item $target "$target.bak-$stamp" }
-  $exclude = @('node_modules', '.git', '_archive')
+  $exclude = @('node_modules', '.git', '.aoci', '_archive')
   Copy-Item -Recurse -Path $src -Destination $target -Force
   foreach ($drop in $exclude) { $p = Join-Path $target $drop; if (Test-Path $p) { Remove-Item -Recurse -Force $p } }
   # npm may have installed playwright here during a dry probe; never ship node_modules into the profile

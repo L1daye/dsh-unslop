@@ -2,15 +2,16 @@
 
 ===/<repository>/===
 .gitattributes[FV6T]: F:强制所有平台以 LF 检出，使 AOCI 基线字节在各平台保持一致 | R:- | A:- | S:缺 eol=lf 时 Windows 默认 CRLF 重写会让基线整树被判 stale
+.gitignore[FV5T]: F:仓库忽略规则，排除 node_modules、demo、unslop-story、日志与系统垃圾文件 | R:- | A:- | S:仅排除生成物与运行产物，不忽略源码与 aoci 正式认知资产
 AGENTS.md[SG6S]: F:面向宿主 Agent 的 AOCI 使用契约，规定建立、读取与维护索引的流程和停点 | R:- | A:- | S:该 aoci 区块由工具生成维护，不得手工改写语义；冲突时以 aoci_rules 与 Guide 为准
 LICENSE[SZ3T]: F:本插件自有代码的 MIT 许可证全文 | R:- | A:- | S:-
 LICENSE-unslop-CC-BY-4.0.txt[SZ6M]: F:随包 vendored 的 unslop 技能内容所采用的 CC BY 4.0 完整法律文本 | R:code:THIRD-PARTY-NOTICES.md | A:- | S:再分发或改编 skills/unslop 内容须署名 Damir Sokolovsky 并链接回仓库，否则违反许可
-README.md[SZ6T]: F:插件总览，含与 dsh-rust-anything 的架构对照、MCP 暴露面、输入框工具面 chip、安装与测试 | R:code:dsh.plugin.json,code:mcp/server.mjs | A:- | S:-
+README.md[SZ6S]: F:插件总览，含与 dsh-rust-anything 的架构对照、MCP 暴露面、输入框工具面 chip、兼容矩阵、安装与测试 | R:code:dsh.plugin.json,code:mcp/server.mjs | A:- | S:-
 THIRD-PARTY-NOTICES.md[SZ5T]: F:第三方声明，说明 unslop 技能自 heydamir/unslop vendored、CC BY 4.0 及署名要求 | R:code:LICENSE-unslop-CC-BY-4.0.txt | A:- | S:-
 client.js[EU7S]: F:输入框「工具面」chip，读取并切换 mcp__unslop__* 工具面（关闭/核心/全部），走带 Bearer 的 /unslop/api 路由 | R:code:host/index.js | A:Chip,ChipInner | S:chip 注册在 conversation.input.left 槽，经 token+surface 路由读写，切换即重注册工具
 cordis.patch.yml[FE7T]: F:插件 host 行 patch，插入 id=unslop-host 并列出 projectDir、callTimeoutMs 等配置 | R:code:host/index.js | A:- | S:插入行 id 固定为 unslop-host，由 package.json 的 dsh.bundle.patch 引用
 dsh.plugin.json[FE7T]: F:插件清单，声明 id、version、engines 及 contributes 的 tools、mcp、skills | R:code:package.json | A:- | S:-
-install.ps1[OV6T]: F:Windows 安装脚本，复制包到 profile 的 node_modules、登记 dsh.profile.bundles，支持 DryRun 与 Uninstall | R:code:dsh.plugin.json | A:- | S:不写 harness 安装目录；卸载时保留 DSH_HOME/skills/unslop
+install.ps1[OV6T]: F:Windows 安装脚本，复制包到 profile 的 node_modules、登记 dsh.profile.bundles，支持 DryRun 与 Uninstall | R:code:dsh.plugin.json | A:- | S:不写 harness 安装目录；卸载时保留 DSH_HOME/skills/unslop；跳过 node_modules/.aoci
 package.json[FV7T]: F:npm 包元数据，type=module，exports host/client/mcp，dsh.bundle 与 dsh.client（web 注入 conversation UI） | R:code:dsh.plugin.json,code:cordis.patch.yml | A:- | S:client 段 platform=web、immediately=true、inject @deepseek-ai/dsh-client-ui-conversation，缺则 chip 不渲染
 
 ===/<repository>/host/===

@@ -1,13 +1,19 @@
 {
   "version": 1,
   "created_at": "2026-11-21T11:49:08Z",
-  "updated_at": "2026-11-21T12:40:19Z",
+  "updated_at": "2026-11-21T12:45:41Z",
   "files": {
     ".gitattributes": {
       "role": "index",
       "sha256": "21fa16a2122e2b0360b47502c577428b645437e08e9e87ffba661f84853cb476",
       "size": 291,
       "normalized_sha256": "21fa16a2122e2b0360b47502c577428b645437e08e9e87ffba661f84853cb476"
+    },
+    ".gitignore": {
+      "role": "index",
+      "sha256": "534ab4f0a41cbb094a59c28b15f93d8df42fe5f55e738ffbb5639dd9f5452862",
+      "size": 67,
+      "normalized_sha256": "0140e057fe763d909a2a20a200fd0f6f2daf7e09b6bb1aadfcc37e426383fa9b"
     },
     "AGENTS.md": {
       "role": "index",
@@ -29,9 +35,9 @@
     },
     "README.md": {
       "role": "index",
-      "sha256": "e46665b327324591dd6b1f2ab5ee28e427c3c8150bca24013e37377823b47c77",
-      "size": 5857,
-      "normalized_sha256": "e46665b327324591dd6b1f2ab5ee28e427c3c8150bca24013e37377823b47c77"
+      "sha256": "2ea8052b85b18010e5c17d8f4d813da14c7b75d0a286fb092e1ff457c2324971",
+      "size": 6609,
+      "normalized_sha256": "2ea8052b85b18010e5c17d8f4d813da14c7b75d0a286fb092e1ff457c2324971"
     },
     "THIRD-PARTY-NOTICES.md": {
       "role": "index",
@@ -41,9 +47,9 @@
     },
     "aoci.code.txt": {
       "role": "index",
-      "sha256": "b4537283709790ba5cc1d2ce61086500b7b0bd0ad79f0a618503495b2e422768",
-      "size": 6382,
-      "normalized_sha256": "b4537283709790ba5cc1d2ce61086500b7b0bd0ad79f0a618503495b2e422768"
+      "sha256": "c45564ac8a04159e0c7690ef3d6427ddc8f5c82f7d732fd919475ae6291fe68e",
+      "size": 6633,
+      "normalized_sha256": "c45564ac8a04159e0c7690ef3d6427ddc8f5c82f7d732fd919475ae6291fe68e"
     },
     "aoci.meta.txt": {
       "role": "index",
@@ -101,9 +107,9 @@
     },
     "install.ps1": {
       "role": "index",
-      "sha256": "a185911ed15b3816298065a9ee22824bebfeb041acdf1644f65aef76a6f97b55",
-      "size": 4473,
-      "normalized_sha256": "a185911ed15b3816298065a9ee22824bebfeb041acdf1644f65aef76a6f97b55"
+      "sha256": "44cf2c29095f0634c01592781868a2cb81c93dd85dbe8474661735ef80637a65",
+      "size": 4482,
+      "normalized_sha256": "44cf2c29095f0634c01592781868a2cb81c93dd85dbe8474661735ef80637a65"
     },
     "mcp/server.mjs": {
       "role": "index",
@@ -113,9 +119,9 @@
     },
     "package.json": {
       "role": "index",
-      "sha256": "c9dde1ea15f05613973d5346fdfa7025f2a0b8148b138a55a96e05ac4c71a30f",
+      "sha256": "4852839cae628140f9c07712dc443c80aa753ba99009723207e893fc840cedf9",
       "size": 1506,
-      "normalized_sha256": "c9dde1ea15f05613973d5346fdfa7025f2a0b8148b138a55a96e05ac4c71a30f"
+      "normalized_sha256": "4852839cae628140f9c07712dc443c80aa753ba99009723207e893fc840cedf9"
     },
     "skills/unslop/SKILL.md": {
       "role": "index",
