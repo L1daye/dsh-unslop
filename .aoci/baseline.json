@@ -1,7 +1,7 @@
 {
   "version": 1,
   "created_at": "2026-11-21T11:49:08Z",
-  "updated_at": "2026-11-21T13:33:23Z",
+  "updated_at": "2026-11-21T13:39:25Z",
   "files": {
     ".gitattributes": {
       "role": "index",
@@ -75,36 +75,6 @@
       "size": 1489,
       "normalized_sha256": "a75a46ae9ee41cd8ba69e3ab2f74c094f8d94693a723a7663713bb58af7b39b0"
     },
-    "docs/banner-monet-giverny-garden.svg": {
-      "role": "observe",
-      "sha256": "a608110b82c71832c0f5a900b47d9195412e478c020dacceb34a3a4e505250e2",
-      "size": 2335,
-      "normalized_sha256": "a608110b82c71832c0f5a900b47d9195412e478c020dacceb34a3a4e505250e2"
-    },
-    "docs/banner-monet-japanese-bridge.svg": {
-      "role": "observe",
-      "sha256": "afb2754bfda342467588619d9bde957705f6a21206bad154fbc0c353010d1e22",
-      "size": 2336,
-      "normalized_sha256": "afb2754bfda342467588619d9bde957705f6a21206bad154fbc0c353010d1e22"
-    },
-    "docs/banner-monet-lavender-haystacks.svg": {
-      "role": "observe",
-      "sha256": "a184cdf8d0bf63752efeab86c9048854dc2be19e0e0db6f9ab96321b6f1f92ff",
-      "size": 2345,
-      "normalized_sha256": "a184cdf8d0bf63752efeab86c9048854dc2be19e0e0db6f9ab96321b6f1f92ff"
-    },
-    "docs/banner-monet-sunrise.svg": {
-      "role": "observe",
-      "sha256": "9e67dd68ce9ff68882ebdfe93f3777ffcd768dc7493f49512169e916725b562e",
-      "size": 2339,
-      "normalized_sha256": "9e67dd68ce9ff68882ebdfe93f3777ffcd768dc7493f49512169e916725b562e"
-    },
-    "docs/banner-monet-water-lilies.svg": {
-      "role": "observe",
-      "sha256": "2cade0d81fb46cca32defb35893837670373d2aca61310a937eb6e72d82cd9a2",
-      "size": 2333,
-      "normalized_sha256": "2cade0d81fb46cca32defb35893837670373d2aca61310a937eb6e72d82cd9a2"
-    },
     "dsh.plugin.json": {
       "role": "index",
       "sha256": "e40620df57c77373c562411b25cfef7eaa057cfbefbd4f47a605ab59916196b7",
@@ -149,9 +119,9 @@
     },
     "package.json": {
       "role": "index",
-      "sha256": "5d4c19e0ebd5dd414626a8bfad2bd42bd890ea3ef24aceb817931a9722b64c09",
-      "size": 1646,
-      "normalized_sha256": "5d4c19e0ebd5dd414626a8bfad2bd42bd890ea3ef24aceb817931a9722b64c09"
+      "sha256": "49329d7f5d74b70a385bf431265bb8bc1d6c002e933594015385cc6f4d2e4ebc",
+      "size": 1615,
+      "normalized_sha256": "49329d7f5d74b70a385bf431265bb8bc1d6c002e933594015385cc6f4d2e4ebc"
     },
     "skills/unslop/SKILL.md": {
       "role": "index",
