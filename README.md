@@ -1,0 +1,96 @@
+# dsh-unslop
+
+把 [heydamir/unslop](https://github.com/heydamir/unslop) 接进 DeepSeek Harness。unslop 是一个把「vibecoded、一眼 AI 味」的界面改造成有设计感的界面的技能：先审计 slop（紫色渐变、发光、emoji 标签、"New ✨" 徽章、乱间距），再从产品本身定方向，按九个 pass 逐层重排。本项目把它做成一个**独立、与宿主无关的 MCP server**，再用一层很薄的 dsh 插件把它桥进来。
+
+> 内核是 prompt 方法（SKILL.md + 六篇 references），执行器只有两个确定性脚本（Playwright 截图 / ffmpeg 故事视频）。因此做成 MCP 的正确切法是「**resources 按需喂 + 两个脚本包成 tool**」，而不是把几千 token 一次性灌进上下文。
+
+## 相对 dsh-rust-anything 的差异
+
+参考案例 `dsh-rust-anything` 是「插件包着一个外部 CLI 二进制」：host 半启动 `rust-anything mcp`，自带 mcp-client，负责下载/校验/安装。unslop 没有二进制、没有 release、没有 MCP server——所以本项目：
+
+| 维度 | dsh-rust-anything | dsh-unslop（本项目） |
+|---|---|---|
+| 被接入的东西 | 外部 CLI 的 `mcp` 子命令 | **本项目自带的 MCP server（`mcp/server.mjs`）** |
+| 安装/下载 | GitHub release + SHA256 + cargo 回退 | **不需要**，全部随包分发，跑 Harness 自带的 Node |
+| MCP 客户端 | 自写 stdio client（通用） | 复用同一模式（`host/mcp-client.js`） |
+| 工具来源 | CLI 的 16 个 tools | server 的 4 个 tools + 2 个 host 直连工具 |
+| 资源 | 无（只有 tools） | **6 个 references 作为 MCP resources**，另可 `unslop_read` |
+| skill | 装 rust-anything 的 SKILL.md | 装 unslop 的 SKILL.md + references + scripts（整树） |
+| 重型依赖 | cargo / MSVC / NDK… | Playwright（截图）、ffmpeg（视频），**可选、按需探测** |
+
+一句话：**rust-anything 是「二进制桥」，unslop 是「自带 server 桥 + 资源库」。后者更轻，因为要接的东西本身就是文本。**
+
+## 结构
+
+```
+dsh-unslop/
+├─ dsh.plugin.json        插件清单（contributes.tools / mcp / skills）
+├─ package.json           exports host/index.js + mcp/server.mjs；bundle→cordis.patch.yml
+├─ cordis.patch.yml        插入一行 host 半（id: unslop-host）
+├─ host/
+│  ├─ index.js            apply(ctx,config)：起 MCP client、注册 mcp__unslop__*、装 skill
+│  └─ mcp-client.js       零依赖 stdio MCP 客户端（initialize/tools/resources/prompts）
+├─ mcp/
+│  └─ server.mjs           ★ 独立 MCP server（任何 MCP 宿主都能直连）
+├─ skills/unslop/
+│  ├─ SKILL.md            vendored 上游技能（CC BY 4.0，装时前置 dsh 说明）
+│  ├─ references/*.md      signs / tokens / visuals / refs / effects / rtl
+│  └─ scripts/*.mjs        snapshot.mjs / story.mjs / story-path.mjs
+└─ tests/                 smoke.mjs（server 协议）+ hosttest.mjs（桩 ctx 桥接）
+```
+
+## MCP 暴露面
+
+`mcp/server.mjs` 是一个真正的 MCP 端点（newline-delimited JSON-RPC 2.0 / stdio）：
+
+- **tools**
+  - `unslop_references` — 列出六篇 references 的一句话摘要（只读）
+  - `unslop_read {name}` — 读取其中一篇全文（signs 是审计清单，tokens 是精确数值）
+  - `unslop_snapshot {url,out,...}` — 用 Playwright 抓 live 页面存自包含 HTML + 截图
+  - `unslop_story {storyHtml,out?}` — 用 ffmpeg 渲染方形故事视频
+- **resources**：`unslop://reference/<signs|tokens|visuals|refs|effects|rtl>`（懒加载）
+- **prompts**：`unslop {target,mode}` — audit → direction → nine passes 的编排 prompt
+
+在 dsh 里，四个 tool 注册为 `mcp__unslop__*`；resources 通过 `unslop_read` 也能读（dsh 的工具注册表只吃 tools）。另有三个 host 直连工具：`unslop_status`（探测）、`unslop_deps`（检查/安装 Playwright、ffmpeg）、`unslop_surface`（读取/切换工具面）。
+
+## 输入框「工具面」chip
+
+和 dsh-rust-anything 一样，输入框左侧有一个 chip：`● unslop 核心 2/4 ▾`。点开可在 `关闭 / 核心 / 全部` 之间切换这轮对话里 `mcp__unslop__*` 的工具面：
+
+- `关闭`（off）——不注册任何 unslop MCP 工具；
+- `核心`（core）——只留 `unslop_references / unslop_read`（只读研究，最省上下文）；
+- `全部`（all）——加上 `unslop_snapshot / unslop_story`（默认）。
+
+选择写入 `<DSH_HOME>/plugins-data/unslop/bridge.json`，**立即重注册工具、无需重启**。chip 通过 Host 半的 `/unslop/api/{token,surface}` 路由读写（每进程随机 Bearer + loopback 围栏）。也可以直接调 `unslop_surface {surface:"core"}`。
+
+## 安装
+
+手工等价（和你现有 profile 一致）：
+
+1. 把本目录复制到 `<DSH_HOME>/profiles/<profile>/node_modules/dsh-unslop`；
+2. 在 profile 的 `package.json` 里把 `dsh-unslop` 加进 `dsh.profile.bundles`；
+3. 重启 Harness。
+
+或：
+
+```powershell
+pwsh -File .\install.ps1 -DryRun     # 先看会改哪些文件
+pwsh -File .\install.ps1             # 复制进 profile、登记 bundle
+```
+
+## 可选依赖
+
+- `unslop_snapshot` 需要 Playwright + Chromium；`unslop_story` 需要 ffmpeg。
+- 两者**不装也能用**核心审计流程；缺时 `unslop_status` 会标出来，`unslop_deps {install:true}` 会跑 `npm install -D playwright` + `npx playwright install chromium`。
+
+## 测试
+
+```powershell
+cd dsh-unslop
+npm test        # smoke.mjs + hosttest.mjs，不装 Harness，用桩 ctx
+```
+
+## 许可
+
+- 插件代码：MIT（`LICENSE`）。
+- `skills/unslop/` 下 vendored 的 unslop 内容：**CC BY 4.0**，作者 Damir Sokolovsky（@heydamir），见 `LICENSE-unslop-CC-BY-4.0.txt` 与 `THIRD-PARTY-NOTICES.md`。任何再分发/改编须保留署名并链接回仓库。

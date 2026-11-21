@@ -1,0 +1,23 @@
+# dsh-unslop — unslop (github.com/heydamir/unslop) for DeepSeek Harness.
+#
+# One row, one process tree: this package's Host half mounts, starts `node mcp/server.mjs` itself
+# (host/mcp-client.js), and registers what it serves as mcp__unslop__<tool>. There is no external
+# binary to download and no dependency on @deepseek-ai/dsh-mcp-client — the server ships in this
+# package and runs on the Node the Harness already uses.
+#
+# The MCP server (mcp/server.mjs) is a standalone, host-agnostic Model Context Protocol endpoint:
+# it also works with Claude Code, Codex or any MCP client. This plugin just bridges its tools and
+# its resources (the six reference docs) into dsh's tool registry, and installs the workflow skill.
+#
+# Knobs:
+#   - projectDir          default folder for unslop_snapshot / unslop_story when no cwd is given
+#   - callTimeoutMs       per tools/call timeout (default 600000; snapshot/story can be slow)
+#   - mcpArgs             override the argv passed to the server (default [<pkg>/mcp/server.mjs])
+#   - installSkillOnBoot  false to stop the plugin keeping <DSH_HOME>/skills/unslop in sync
+- insert:
+    - id: unslop-host
+      name: dsh-unslop
+      config:
+        # projectDir: 'D:\work\my-web-app'
+        # callTimeoutMs: 600000
+        # installSkillOnBoot: true

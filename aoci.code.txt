@@ -1,0 +1,38 @@
+#AOCI-CODE-VOLUME: 1
+
+===/<repository>/===
+.gitattributes[FV6T]: F:强制所有平台以 LF 检出，使 AOCI 基线字节在各平台保持一致 | R:- | A:- | S:缺 eol=lf 时 Windows 默认 CRLF 重写会让基线整树被判 stale
+AGENTS.md[SG6S]: F:面向宿主 Agent 的 AOCI 使用契约，规定建立、读取与维护索引的流程和停点 | R:- | A:- | S:该 aoci 区块由工具生成维护，不得手工改写语义；冲突时以 aoci_rules 与 Guide 为准
+LICENSE[SZ3T]: F:本插件自有代码的 MIT 许可证全文 | R:- | A:- | S:-
+LICENSE-unslop-CC-BY-4.0.txt[SZ6M]: F:随包 vendored 的 unslop 技能内容所采用的 CC BY 4.0 完整法律文本 | R:code:THIRD-PARTY-NOTICES.md | A:- | S:再分发或改编 skills/unslop 内容须署名 Damir Sokolovsky 并链接回仓库，否则违反许可
+README.md[SZ6T]: F:插件总览，含与 dsh-rust-anything 的架构对照、MCP 暴露面、输入框工具面 chip、安装与测试 | R:code:dsh.plugin.json,code:mcp/server.mjs | A:- | S:-
+THIRD-PARTY-NOTICES.md[SZ5T]: F:第三方声明，说明 unslop 技能自 heydamir/unslop vendored、CC BY 4.0 及署名要求 | R:code:LICENSE-unslop-CC-BY-4.0.txt | A:- | S:-
+client.js[EU7S]: F:输入框「工具面」chip，读取并切换 mcp__unslop__* 工具面（关闭/核心/全部），走带 Bearer 的 /unslop/api 路由 | R:code:host/index.js | A:Chip,ChipInner | S:chip 注册在 conversation.input.left 槽，经 token+surface 路由读写，切换即重注册工具
+cordis.patch.yml[FE7T]: F:插件 host 行 patch，插入 id=unslop-host 并列出 projectDir、callTimeoutMs 等配置 | R:code:host/index.js | A:- | S:插入行 id 固定为 unslop-host，由 package.json 的 dsh.bundle.patch 引用
+dsh.plugin.json[FE7T]: F:插件清单，声明 id、version、engines 及 contributes 的 tools、mcp、skills | R:code:package.json | A:- | S:-
+install.ps1[OV6T]: F:Windows 安装脚本，复制包到 profile 的 node_modules、登记 dsh.profile.bundles，支持 DryRun 与 Uninstall | R:code:dsh.plugin.json | A:- | S:不写 harness 安装目录；卸载时保留 DSH_HOME/skills/unslop
+package.json[FV7T]: F:npm 包元数据，type=module，exports host/client/mcp，dsh.bundle 与 dsh.client（web 注入 conversation UI） | R:code:dsh.plugin.json,code:cordis.patch.yml | A:- | S:client 段 platform=web、immediately=true、inject @deepseek-ai/dsh-client-ui-conversation，缺则 chip 不渲染
+
+===/<repository>/host/===
+http-util.js[IN6S]: F:管理路由的 HTTP 外壳，含每进程随机 Bearer、loopback Host/Origin 围栏与共享辅助函数 | R:code:host/index.js | A:- | S:非 loopback 的 Host/Origin 一律拒绝；token 用 timingSafeEqual 比较
+index.js[EE8L]: F:插件 Host 半，启动 MCP 客户端、按工具面注册 mcp__unslop__*、装 skill，提供 unslop_status/deps/surface 与 /unslop/api 路由 | R:code:host/mcp-client.js,code:mcp/server.mjs,code:host/http-util.js | A:apply,startClient,applySurface | S:用 process.execPath+ELECTRON_RUN_AS_NODE 起 server；UNSLOP_PLAYWRIGHT_HOME 指向 plugins-data 持久目录；不下载外部二进制
+mcp-client.js[IN7M]: F:零依赖 stdio MCP 客户端，实现 initialize、tools、resources、prompts 与换行分隔 JSON-RPC 2.0 | R:code:mcp/server.mjs | A:createUnslopClient,callTool,listResources | S:不依赖 @deepseek-ai/dsh-mcp-client（Harness 不附带），消息按行分隔
+
+===/<repository>/mcp/===
+server.mjs[MN9M]: F:与宿主无关的 MCP stdio server，暴露 4 tool、6 reference resource、1 prompt，并把持久 Playwright 经 NODE_PATH 传给子脚本 | R:code:host/index.js,code:skills/unslop/references/signs.md | A:initialize,callTool,runNode | S:tool 执行失败以 result.isError 返回；runNode 把 UNSLOP_PLAYWRIGHT_HOME 并入 NODE_PATH 供 snapshot/story 回退解析
+
+===/<repository>/skills/unslop/===
+SKILL.md[SU9M]: F:unslop 技能工作流，审计 slop→定方向→九个 pass 修界面，含操作护栏与检查清单 | R:code:skills/unslop/references/signs.md,code:skills/unslop/references/tokens.md | A:Direction | S:vendored 自 heydamir/unslop，CC BY 4.0，须保留 @heydamir 署名；九个 pass 顺序固定，方向未确认前不改
+
+===/<repository>/skills/unslop/references/===
+effects.md[SU7S]: F:代码化视觉处理，含 glyph 字符网格、halftone、dither、duotone 与性能规则 | R:code:skills/unslop/references/visuals.md | A:glyphs | S:-
+refs.md[SU7T]: F:成品示例索引（含故事视频帧），供学习构图、光线与克制，勿抄主题或布局 | R:code:skills/unslop/references/visuals.md | A:- | S:-
+rtl.md[SL7T]: F:RTL 规则，含 dir/lang、逻辑属性、镜像图标与数字系统，与 pass 冲突时以本规则为准 | R:code:skills/unslop/SKILL.md | A:- | S:-
+signs.md[SU8S]: F:审计清单，逐条列出 AI slop 迹象（渐变、发光、emoji、喊话文案、乱间距）及修法 | R:code:skills/unslop/SKILL.md | A:- | S:这里的修法是目标而非步进，执行顺序以 SKILL.md 的九个 pass 为准
+tokens.md[SU8S]: F:各 pass 的精确取值，含 4px 间距刻度、中性色阶、字体、圆角、时长与缓动 | R:code:skills/unslop/references/signs.md | A:- | S:这些是起点值；品牌已有设计体系时保留原值，只修正其用法
+visuals.md[SU7T]: F:如何为 hero 选主题、写图像提示词配方，并把图放进页面融进配色 | R:code:skills/unslop/references/refs.md,code:skills/unslop/references/effects.md | A:- | S:-
+
+===/<repository>/skills/unslop/scripts/===
+snapshot.mjs[XU8S]: F:用 Playwright 抓 live 页面存为自包含 HTML 并截图，内联 CSS 与图片，支持 dark/light | R:code:mcp/server.mjs | A:- | S:Playwright 从 playwright/playwright-core 或 cwd 的 node_modules 解析；缺失即报错退出，不内置浏览器
+story-path.mjs[RS7T]: F:把 story 服务请求路径安全解析为 root 内文件，防目录穿越与符号链接逃逸 | R:code:skills/unslop/scripts/story.mjs | A:resolveStoryFile | S:先 realpath 再做 relative 校验；裸 startsWith 会放过同前缀兄弟目录与符号链接
+story.mjs[XU8L]: F:从 story.html 用 Playwright 逐帧渲染、ffmpeg 合成方形故事视频（redline、morph、wave） | R:code:skills/unslop/scripts/story-path.mjs,code:skills/unslop/scripts/snapshot.mjs | A:- | S:需 ffmpeg 与 Playwright；页面渲染宽 1440，warn 仅告警不阻断
