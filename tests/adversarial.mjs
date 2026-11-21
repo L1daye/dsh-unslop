@@ -99,10 +99,11 @@ async function mcpSuite() {
     const story = await tool('unslop_story', { storyHtml: 'x.html' })
     ok('unslop_story no out -> graceful isError', story.ok === false)
 
-    // snapshot when Playwright absent must be isError with guidance (out confined under ROOT/plugin dir)
+    // snapshot on about:blank must be handled gracefully either way: isError when Playwright is absent,
+    // or a successful capture when it is installed. Both are correct; a crash/hang is not.
     const snapOut = path.join(ROOT, 'adv_' + Date.now() + '.html')
     const snap = await tool('unslop_snapshot', { url: 'about:blank', out: snapOut })
-    ok('unslop_snapshot w/o Playwright -> graceful isError', snap.ok === false && /playwright/i.test(snap.text), snap.text.slice(0, 80))
+    ok('unslop_snapshot (about:blank) handled gracefully', snap.ok === true || /playwright/i.test(snap.text), snap.text.slice(0, 80))
     try { fs.rmSync(snapOut, { force: true }) } catch {}
     try { fs.rmSync(snapOut.replace(/\.html?$/, '') + '.live.png', { force: true }) } catch {}
 
