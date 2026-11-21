@@ -1,4 +1,4 @@
-<img src="docs/banner-monet-water-lilies.png" alt="dsh-unslop" width="100%">
+<img src="docs/banner-dark-ember.png" alt="dsh-unslop" width="100%">
 
 # dsh-unslop
 
