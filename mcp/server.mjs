@@ -27,7 +27,7 @@ const REF_DIR = path.join(SKILL_DIR, 'references')
 const SCRIPT_DIR = path.join(SKILL_DIR, 'scripts')
 
 const PROTOCOL_VERSION = '2025-06-18'
-const SERVER_INFO = { name: 'unslop', version: '0.1.0' }
+const SERVER_INFO = { name: 'unslop', version: '0.1.2' }
 const NODE = process.execPath
 
 // ---- reference catalog -------------------------------------------------------------------
@@ -90,11 +90,29 @@ function runNode(script, args, { cwd, timeoutMs = 180_000, signal } = {}) {
     if (signal) { if (signal.aborted) onAbort(); else signal.addEventListener('abort', onAbort, { once: true }) }
     const timer = timeoutMs > 0 ? setTimeout(() => { kill(); finish(null, `timed out after ${timeoutMs} ms`) }, timeoutMs) : null
     timer?.unref?.()
-    child.stdout.on('data', (c) => { stdout += c.toString() })
-    child.stderr.on('data', (c) => { stderr += c.toString() })
+    const CAP = 2_000_000
+    child.stdout.on('data', (c) => { if (stdout.length < CAP) stdout += c.toString() })
+    child.stderr.on('data', (c) => { if (stderr.length < CAP) stderr += c.toString() })
     child.on('error', (e) => finish(null, String(e?.message || e)))
     child.on('close', (code) => finish(code))
   })
+}
+
+// Confine tool-supplied local paths to the project root (base) so an induced call cannot read/write
+// arbitrary files. URL schemes are accepted only for the url argument (live-site snapshot); `out` and
+// a local story file must be local paths under the base.
+function containPath(input, base, localOnly) {
+  const s = String(input)
+  if (/^(https?|data|about):/i.test(s)) {
+    if (localOnly) return { error: `a local path is required, got a URL: ${input}` }
+    return { value: s }
+  }
+  let p = s
+  if (/^file:\/\//i.test(s)) { try { p = fileURLToPath(s) } catch { return { error: `invalid file:// url: ${input}` } } }
+  const abs = path.resolve(base, p)
+  const rel = path.relative(base, abs)
+  if (rel === '..' || rel.startsWith('..' + path.sep) || path.isAbsolute(rel)) return { error: `path escapes project root: ${input}` }
+  return { value: abs }
 }
 
 // ---- tool definitions -------------------------------------------------------------------
@@ -144,6 +162,7 @@ const TOOLS = [
         storyHtml: { type: 'string', description: 'Path to unslop-story/story.html.' },
         out: { type: 'string', description: 'Output .mp4 path. Omit with play=true to just watch it live.' },
         wide: { type: 'boolean', description: 'Render 16:9 instead of square.' },
+        play: { type: 'boolean', description: 'Open the story live in a browser window instead of writing a file (needs out to be omitted).' },
         cwd: { type: 'string', description: 'Working directory. Defaults to the plugin dir.' },
       },
       required: ['storyHtml'],
@@ -171,23 +190,34 @@ async function callTool(name, args, signal) {
     }
     case 'unslop_snapshot': {
       if (!a.url || !a.out) return toolResult('unslop_snapshot needs url and out', true)
-      const argv = [String(a.url), String(a.out)]
+      const base = a.cwd ? path.resolve(a.cwd) : PKG
+      const u = containPath(a.url, base, false)
+      if (u.error) return toolResult(u.error, true)
+      const o = containPath(a.out, base, true)
+      if (o.error) return toolResult(o.error, true)
+      const argv = [u.value, o.value]
       if (a.label) argv.push(String(a.label))
       if (a.theme === 'dark') argv.push('--dark')
       else if (a.theme === 'light') argv.push('--light')
       if (Number.isInteger(a.width)) argv.push('--width', String(a.width))
       if (Number.isInteger(a.height)) argv.push('--height', String(a.height))
-      const r = await runNode('snapshot.mjs', argv, { cwd: a.cwd ? path.resolve(a.cwd) : PKG, timeoutMs: 180_000, signal })
+      // cwd is a TRUSTED dir (never the caller's project) so the upstream createRequire(process.cwd())
+      // cannot be hijacked by a planted node_modules/playwright; paths above are already absolute.
+      const r = await runNode('snapshot.mjs', argv, { cwd: PKG, timeoutMs: 180_000, signal })
       const ok = r.code === 0
       const body = [`exit ${r.code ?? 'null'} in ${r.ms} ms`, r.stdout.trim(), r.stderr.trim()].filter(Boolean).join('\n')
       return toolResult(ok ? `snapshot ok\n${body}` : `snapshot failed\n${body}`, !ok)
     }
     case 'unslop_story': {
       if (!a.storyHtml) return toolResult('unslop_story needs storyHtml', true)
-      const argv = [String(a.storyHtml)]
-      if (a.out) argv.push(String(a.out))
+      const base = a.cwd ? path.resolve(a.cwd) : PKG
+      const inp = containPath(a.storyHtml, base, true)
+      if (inp.error) return toolResult(inp.error, true)
+      const argv = [inp.value]
+      if (a.out) { const o = containPath(a.out, base, true); if (o.error) return toolResult(o.error, true); argv.push(o.value) }
       if (a.wide === true) argv.push('--wide')
-      const r = await runNode('story.mjs', argv, { cwd: a.cwd ? path.resolve(a.cwd) : PKG, timeoutMs: 600_000, signal })
+      if (a.play === true && !a.out) argv.push('--play')
+      const r = await runNode('story.mjs', argv, { cwd: PKG, timeoutMs: 600_000, signal })
       const ok = r.code === 0
       const body = [`exit ${r.code ?? 'null'} in ${r.ms} ms`, r.stdout.trim(), r.stderr.trim()].filter(Boolean).join('\n')
       return toolResult(ok ? `story ok\n${body}` : `story failed\n${body}`, !ok)
@@ -237,15 +267,31 @@ function send(message) {
   process.stdout.write(`${JSON.stringify(message)}\n`)
 }
 
+const activeCalls = new Map() // request id -> AbortController (so notifications/cancelled can kill the child)
+
 function reply(id, result) {
+  // Never answer a notification (no id): a result frame without id is a JSON-RPC violation.
+  if (id === undefined || id === null) return
   send({ jsonrpc: '2.0', id, result })
 }
 
 function replyError(id, code, message) {
+  if (id === undefined || id === null) return
   send({ jsonrpc: '2.0', id, error: { code, message } })
 }
 
+// Explicit error frame that may carry id:null (parse / invalid-request / notification-level errors).
+function sendError(id, code, message) {
+  send({ jsonrpc: '2.0', id: id === undefined ? null : id, error: { code, message } })
+}
+
 async function handle(message) {
+  // A valid-JSON line can still be null / an array / a primitive; destructuring those crashes the
+  // process. Reject as Invalid Request instead of dying.
+  if (message === null || typeof message !== 'object' || Array.isArray(message)) {
+    sendError(null, -32600, 'Invalid Request')
+    return
+  }
   const { id, method, params } = message
   const isRequest = id !== undefined && id !== null
   try {
@@ -257,20 +303,29 @@ async function handle(message) {
           serverInfo: SERVER_INFO,
         })
       case 'notifications/initialized':
-      case 'notifications/cancelled':
         return // notification, no reply
+      case 'notifications/cancelled': {
+        const rid = params && params.requestId
+        const controller = activeCalls.get(rid)
+        if (controller) { try { controller.abort() } catch { /* gone */ } }
+        return
+      }
       case 'ping':
-        return isRequest ? reply(id, {}) : undefined
+        return reply(id, {})
       case 'tools/list':
         return reply(id, { tools: TOOLS })
       case 'tools/call': {
         const toolName = params && params.name
+        const controller = new AbortController()
+        if (isRequest) activeCalls.set(id, controller)
         let result
         try {
-          result = await callTool(toolName, params && params.arguments)
+          result = await callTool(toolName, params && params.arguments, controller.signal)
         } catch (error) {
           // MCP convention: a tool's own failure is a result with isError, not a protocol error.
           result = toolResult(String(error?.message || error), true)
+        } finally {
+          if (isRequest) activeCalls.delete(id)
         }
         return reply(id, result)
       }
@@ -286,15 +341,19 @@ async function handle(message) {
       case 'resources/read': {
         const uri = String(params && params.uri || '')
         const key = uri.replace(/^unslop:\/\/reference\//, '').replace(/\.md$/i, '')
+        if (!Object.prototype.hasOwnProperty.call(REFERENCES, key)) return replyError(id, -32002, `resource not found: ${uri}`)
         const { text } = readReference(key)
         return reply(id, { contents: [{ uri, mimeType: 'text/markdown', text }] })
       }
       case 'prompts/list':
         return reply(id, { prompts: PROMPTS })
-      case 'prompts/get':
-        return reply(id, getPrompt(params && params.name, params && params.arguments))
+      case 'prompts/get': {
+        const name = params && params.name
+        if (name !== 'unslop') return replyError(id, -32602, `unknown prompt: ${name}`)
+        return reply(id, getPrompt(name, params && params.arguments))
+      }
       default:
-        if (isRequest) replyError(id, -32601, `method not found: ${method}`)
+        return replyError(id, -32601, `method not found: ${method}`)
     }
   } catch (error) {
     if (isRequest) replyError(id, -32603, String(error?.message || error))
@@ -303,18 +362,29 @@ async function handle(message) {
 }
 
 let buffer = ''
+const MAX_LINE = 16 * 1024 * 1024
 process.stdin.setEncoding('utf8')
 process.stdin.on('data', (chunk) => {
   buffer += chunk
+  // A single unterminated line must not grow memory without bound.
+  if (buffer.length > MAX_LINE && buffer.indexOf('\n') < 0) {
+    process.stderr.write('[unslop] line exceeds max size, dropping\n')
+    buffer = ''
+    return
+  }
   let index
   while ((index = buffer.indexOf('\n')) >= 0) {
     const line = buffer.slice(0, index).trim()
     buffer = buffer.slice(index + 1)
     if (!line) continue
     let message
-    try { message = JSON.parse(line) } catch { process.stderr.write(`[unslop] bad JSON line\n`); continue }
-    handle(message)
+    try { message = JSON.parse(line) } catch { sendError(null, -32700, 'Parse error'); continue }
+    Promise.resolve(handle(message)).catch((error) => process.stderr.write(`[unslop] ${String(error?.message || error)}\n`))
   }
 })
-process.stdin.on('end', () => process.exit(0))
+process.stdin.on('end', () => {
+  // Stop in-flight snapshot/story children before exiting so they are not orphaned.
+  for (const controller of activeCalls.values()) { try { controller.abort() } catch { /* gone */ } }
+  setTimeout(() => process.exit(0), 50)
+})
 process.stderr.write('[unslop] MCP server ready (stdio)\n')

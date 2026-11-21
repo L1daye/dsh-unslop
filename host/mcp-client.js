@@ -10,7 +10,7 @@
 import { spawn } from 'node:child_process'
 
 const PROTOCOL_VERSION = '2025-06-18'
-const CLIENT_INFO = { name: 'dsh-unslop', version: '0.1.0' }
+const CLIENT_INFO = { name: 'dsh-unslop', version: '0.1.2' }
 const INIT_TIMEOUT_MS = 20_000
 const LIST_TIMEOUT_MS = 30_000
 const DEFAULT_CALL_TIMEOUT_MS = 600_000
@@ -36,7 +36,9 @@ export function createUnslopClient(options) {
   const down = new Set()
 
   const send = (message) => {
-    if (!child || child.killed) throw new Error('unslop MCP server is not running')
+    if (!child || child.killed || !child.stdin || child.stdin.destroyed || !child.stdin.writable) {
+      throw new Error('unslop MCP server is not running')
+    }
     child.stdin.write(`${JSON.stringify(message)}\n`)
   }
 
@@ -65,8 +67,12 @@ export function createUnslopClient(options) {
         return
       }
       const entry = { resolve, reject, method, timer: null, onAbort: null, signal }
+      // Register BEFORE the abort check: an already-aborted signal must settle this promise, not
+      // leave it pending forever (the old order returned early with nothing in `pending`).
+      pending.set(id, entry)
       if (timeoutMs > 0) {
         entry.timer = setTimeout(() => {
+          try { send({ jsonrpc: '2.0', method: 'notifications/cancelled', params: { requestId: id } }) } catch { /* gone */ }
           settle(id, (found) => found.reject(new Error(`${method} timed out after ${timeoutMs} ms`)))
         }, timeoutMs)
         if (entry.timer.unref) entry.timer.unref()
@@ -82,7 +88,6 @@ export function createUnslopClient(options) {
         }
         signal.addEventListener('abort', entry.onAbort, { once: true })
       }
-      pending.set(id, entry)
       try {
         send(message)
       } catch (error) {
@@ -119,9 +124,13 @@ export function createUnslopClient(options) {
   }
 
   function attach(proc) {
+    // After the child exits, a late write to its closed stdin emits 'error' on the stream; without
+    // a listener that becomes an unhandled 'error' event and crashes the host. Swallow it here; the
+    // exit handler is what reports the real state.
+    try { proc.stdin.on('error', () => { /* EPIPE after exit */ }) } catch { /* no stdin */ }
     proc.stdout.setEncoding('utf8')
     proc.stdout.on('data', (chunk) => {
-      buffer += chunk
+      if (buffer.length < 8_000_000) buffer += chunk
       let index
       while ((index = buffer.indexOf('\n')) >= 0) {
         const line = buffer.slice(0, index)
@@ -141,6 +150,7 @@ export function createUnslopClient(options) {
       }
     })
     proc.on('exit', (code, signal) => {
+      if (child === proc) child = null
       const reason = `unslop MCP server exited (code ${code}, signal ${signal === null ? 'none' : signal})`
       if (!stopped) log(reason)
       failAll(reason)

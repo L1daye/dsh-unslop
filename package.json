@@ -1,6 +1,6 @@
 {
   "name": "dsh-unslop",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "description": "unslop for DeepSeek Harness: a standalone MCP server that turns vibecoded, AI-looking UI into a designed interface, bridged into dsh as mcp__unslop__* tools plus a workflow skill. Vendored under CC BY 4.0.",
   "license": "MIT",
@@ -40,6 +40,8 @@
     "tests/smoke.mjs",
     "tests/hosttest.mjs",
     "tests/routetest.mjs",
+    "tests/adversarial.mjs",
+    "install.ps1",
     "README.md",
     "LICENSE",
     "LICENSE-unslop-CC-BY-4.0.txt",
@@ -58,6 +60,6 @@
     }
   },
   "scripts": {
-    "test": "node tests/smoke.mjs && node tests/hosttest.mjs && node tests/routetest.mjs"
+    "test": "node tests/smoke.mjs && node tests/hosttest.mjs && node tests/routetest.mjs && node tests/adversarial.mjs"
   }
 }

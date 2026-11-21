@@ -21,3 +21,5 @@
         # projectDir: 'D:\work\my-web-app'
         # callTimeoutMs: 600000
         # installSkillOnBoot: true
+        # mcpArgs: ['<pkg>/mcp/server.mjs']    override argv passed to the MCP server
+        # trustedHosts: ['myhost:51404']        extra Host/Origin authorities for the /unslop/api routes

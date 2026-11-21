@@ -34,6 +34,13 @@ export function isLoopbackHostname(hostname) {
   return host === 'localhost' || host === '127.0.0.1' || host === '::1' || host.endsWith('.localhost')
 }
 
+// A Host header is attacker-controlled for non-browser clients; the real TCP peer address is not.
+export function isLoopbackIp(ip) {
+  if (!ip) return true // no socket info available (e.g. a test harness) — don't over-block
+  const addr = String(ip).toLowerCase().replace(/^::ffff:/, '')
+  return addr === '::1' || addr === '127.0.0.1' || addr.startsWith('127.') || addr === '0:0:0:0:0:0:0:1'
+}
+
 export function hostAllowed(req, auth) {
   const authority = headerOf(req.headers, 'host')
   if (!authority) return false
@@ -75,6 +82,14 @@ export function sendJson(res, status, payload) {
 export function rejectRequest(req, res, auth, options = {}) {
   if (!hostAllowed(req, auth)) return sendJson(res, 403, { ok: false, error: 'host not allowed' })
   if (!originAllowed(req, auth)) return sendJson(res, 403, { ok: false, error: 'origin not allowed' })
+  // The loopback fence must not trust only the (spoofable) Host header: also require the TCP peer to
+  // be loopback, unless the caller listed this authority in trustedHosts.
+  const remote = req.socket && req.socket.remoteAddress
+  if (remote && !isLoopbackIp(remote)) {
+    const authority = String(headerOf(req.headers, 'host') || '').toLowerCase()
+    const trusted = (auth.settings.trustedHosts || []).map((e) => String(e).toLowerCase()).includes(authority)
+    if (!trusted) return sendJson(res, 403, { ok: false, error: 'remote address not allowed' })
+  }
   if (options.token !== false) {
     const presented = bearerOf(req)
     if (!presented || !constantEquals(presented, auth.token)) return sendJson(res, 401, { ok: false, error: 'missing or stale token' })

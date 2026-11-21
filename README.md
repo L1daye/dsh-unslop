@@ -101,6 +101,13 @@ cd dsh-unslop
 npm test        # smoke.mjs + hosttest.mjs + routetest.mjs，不装 Harness，用桩 ctx
 ```
 
+## 安全
+
+- **管理路由**（`/unslop/api/*`）：每进程随机 Bearer + loopback 双重围栏——Host/Origin 校验之外还要求 `socket.remoteAddress` 为回环地址（防伪造 Host 头骗 token）；token 用 `timingSafeEqual` 比较、0600 落盘、不写日志。
+- **路径收敛**：`unslop_snapshot` 的 `out` 与本地输入、`unslop_story` 的 `storyHtml`/`out` 必须落在项目根内（`..`/绝对路径越界一律拒绝）；`url` 允许 http(s)（抓 live 站点），本地 file 路径同样受限。
+- **Playwright 解析**只从插件目录与 `UNSLOP_PLAYWRIGHT_HOME` 持久目录解析，子进程 cwd 固定为受信目录——项目里被投毒的 `node_modules/playwright` 不会被加载（防 require 劫持）。
+- **MCP 协议**：畸形/`null` 行不再崩溃（回 `-32600`）、通知不回复、取消真正 kill 子进程、缓冲有上限。
+
 ## 许可
 
 - 插件代码：MIT（`LICENSE`）。

@@ -48,8 +48,10 @@ if ($Uninstall) {
   $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
   [System.IO.File]::WriteAllText($pkgJson, ($pkg | ConvertTo-Json -Depth 32), $utf8NoBom)
   if (Test-Path $target) { Move-Item $target "$target.bak-$stamp" }
-  Say "   removed the bundle entry and moved the package to $target.bak-$stamp"
-  Say "   left untouched: $skillDir"
+  if (Test-Path $skillDir) { Remove-Item -Recurse -Force $skillDir -ErrorAction SilentlyContinue }
+  $dataDir = Join-Path $DshHome 'plugins-data\unslop'
+  if (Test-Path $dataDir) { Remove-Item -Recurse -Force $dataDir -ErrorAction SilentlyContinue }
+  Say "   removed the bundle entry, moved the package to $target.bak-$stamp; cleaned skills\unslop + plugins-data\unslop"
   return
 }
 
@@ -63,7 +65,7 @@ if ($DryRun) {
 } else {
   New-Item -ItemType Directory -Force -Path (Join-Path $profileDir 'node_modules') | Out-Null
   if (Test-Path $target) { Move-Item $target "$target.bak-$stamp" }
-  $exclude = @('node_modules', '.git', '.aoci', '_archive')
+  $exclude = @('node_modules', '.git', '.aoci', '_archive', 'aoci.txt', 'aoci.code.txt', 'aoci.meta.txt', 'AGENTS.md')
   Copy-Item -Recurse -Path $src -Destination $target -Force
   foreach ($drop in $exclude) { $p = Join-Path $target $drop; if (Test-Path $p) { Remove-Item -Recurse -Force $p } }
   # npm may have installed playwright here during a dry probe; never ship node_modules into the profile

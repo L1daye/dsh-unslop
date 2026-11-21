@@ -317,7 +317,7 @@ function surfaceTool(settings, hooks) {
     async execute(args) {
       let patch = null
       if (args && typeof args.surface === 'string') {
-        const tier = SURFACES[args.surface]
+        const tier = Object.prototype.hasOwnProperty.call(SURFACES, args.surface) ? SURFACES[args.surface] : null
         if (!tier) throw new Error(`unknown surface "${args.surface}"; use one of ${SURFACE_ORDER.join(', ')}`)
         patch = tier
       } else if (args && Array.isArray(args.allow)) {
@@ -342,13 +342,17 @@ function surfaceRouteHandler(hooks) {
     if ((req.method || 'GET').toUpperCase() === 'POST') {
       const body = await readJsonBody(req)
       let patch = null
-      if (typeof body.surface === 'string' && SURFACES[body.surface]) patch = SURFACES[body.surface]
+      if (typeof body.surface === 'string' && Object.prototype.hasOwnProperty.call(SURFACES, body.surface)) patch = SURFACES[body.surface]
       else if (Array.isArray(body.allow)) patch = { enabled: body.enabled !== false, allow: body.allow.map(String) }
       if (!patch) return sendJson(res, 400, { ok: false, error: 'body must be {"surface":"off|core|all"} or {"allow":[...]}' })
       writeSurface(patch)
+      const applied = hooks.applySurface()
+      return sendJson(res, 200, { ok: true, ...readSurface(), mcp: applied, mcpTools: hooks.registryCounts() })
     }
-    const applied = hooks.applySurface()
-    sendJson(res, 200, { ok: true, ...readSurface(), mcp: applied, mcpTools: hooks.registryCounts() })
+    // GET is read-only: the chip polls this, so it must never re-register tools on a poll.
+    const surface = readSurface()
+    const counts = hooks.registryCounts()
+    sendJson(res, 200, { ok: true, ...surface, mcp: { ...counts, surface: surface.surface, allow: surface.allow }, mcpTools: counts })
   }
 }
 
