@@ -1,3 +1,5 @@
+<img src="docs/banner-monet-water-lilies.png" alt="dsh-unslop" width="100%">
+
 # dsh-unslop
 
 把 [heydamir/unslop](https://github.com/heydamir/unslop) 接进 DeepSeek Harness。unslop 是一个把「vibecoded、一眼 AI 味」的界面改造成有设计感的界面的技能：先审计 slop（紫色渐变、发光、emoji 标签、"New ✨" 徽章、乱间距），再从产品本身定方向，按九个 pass 逐层重排。本项目把它做成一个**独立、与宿主无关的 MCP server**，再用一层很薄的 dsh 插件把它桥进来。

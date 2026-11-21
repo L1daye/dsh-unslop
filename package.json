@@ -42,6 +42,8 @@
     "tests/routetest.mjs",
     "tests/adversarial.mjs",
     "install.ps1",
+    "docs/banner-monet-*.svg",
+    "docs/banner-monet-*.png",
     "README.md",
     "LICENSE",
     "LICENSE-unslop-CC-BY-4.0.txt",
