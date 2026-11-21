@@ -42,7 +42,6 @@
     "tests/routetest.mjs",
     "tests/adversarial.mjs",
     "install.ps1",
-    "docs/banner-monet-*.svg",
     "docs/banner-monet-*.png",
     "README.md",
     "LICENSE",
