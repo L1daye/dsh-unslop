@@ -6,13 +6,13 @@
 AGENTS.md[SG6S]: F:面向宿主 Agent 的 AOCI 使用契约，规定建立、读取与维护索引的流程和停点 | R:- | A:- | S:该 aoci 区块由工具生成维护，不得手工改写语义；冲突时以 aoci_rules 与 Guide 为准
 LICENSE[SZ3T]: F:本插件自有代码的 MIT 许可证全文 | R:- | A:- | S:-
 LICENSE-unslop-CC-BY-4.0.txt[SZ6M]: F:随包 vendored 的 unslop 技能内容所采用的 CC BY 4.0 完整法律文本 | R:code:THIRD-PARTY-NOTICES.md | A:- | S:再分发或改编 skills/unslop 内容须署名 Damir Sokolovsky 并链接回仓库，否则违反许可
-README.md[SZ6S]: F:插件总览：与 dsh-rust-anything 的架构对照、MCP 暴露面、工具面 chip、兼容矩阵、安全、安装与测试 | R:code:dsh.plugin.json,code:mcp/server.mjs | A:- | S:-
+README.md[SZ6S]: F:插件总览：与 dsh-rust-anything 的架构对照、MCP 暴露面、工具面 chip、兼容矩阵、安全、安装与测试（顶部 Monet 横幅） | R:code:dsh.plugin.json,code:mcp/server.mjs | A:- | S:-
 THIRD-PARTY-NOTICES.md[SZ5T]: F:第三方声明，说明 unslop 技能自 heydamir/unslop vendored、CC BY 4.0 及署名要求 | R:code:LICENSE-unslop-CC-BY-4.0.txt | A:- | S:-
 client.js[EU7S]: F:输入框「工具面」chip，读取并切换 mcp__unslop__* 工具面（关闭/核心/全部），走带 Bearer 的 /unslop/api 路由 | R:code:host/index.js | A:Chip,ChipInner | S:chip 注册在 conversation.input.left 槽，经 token+surface 路由读写，切换即重注册工具
 cordis.patch.yml[FE7T]: F:插件 host 行 patch，插入 id=unslop-host 并列出 projectDir/callTimeoutMs/mcpArgs/trustedHosts 配置 | R:code:host/index.js | A:- | S:插入行 id 固定为 unslop-host，由 package.json 的 dsh.bundle.patch 引用
 dsh.plugin.json[FE7T]: F:插件清单，声明 id、version、engines 及 contributes 的 tools（3 个）、mcp、skills | R:code:package.json | A:- | S:-
 install.ps1[OV6T]: F:Windows 安装脚本，复制包到 profile 的 node_modules、登记 dsh.profile.bundles，支持 DryRun 与 Uninstall | R:code:dsh.plugin.json | A:- | S:跳过 node_modules/.aoci/aoci 资产与 AGENTS.md；卸载时清理 skills/unslop 与 plugins-data/unslop
-package.json[FV7T]: F:npm 包元数据，type=module，exports host/client/mcp，dsh.bundle 与 dsh.client；files 含 install.ps1 与 tests | R:code:dsh.plugin.json,code:cordis.patch.yml | A:- | S:client 段 platform=web、immediately=true、inject @deepseek-ai/dsh-client-ui-conversation
+package.json[FV7T]: F:npm 包元数据，type=module，exports host/client/mcp，dsh.bundle 与 dsh.client；files 含 install.ps1、tests、docs 横幅 | R:code:dsh.plugin.json,code:cordis.patch.yml | A:- | S:client 段 platform=web、immediately=true、inject @deepseek-ai/dsh-client-ui-conversation
 
 ===/<repository>/host/===
 http-util.js[IN6S]: F:管理路由的 HTTP 外壳，含每进程随机 Bearer、loopback Host/Origin 加源地址围栏与共享辅助函数 | R:code:host/index.js | A:- | S:非 loopback 的 Host/Origin/remoteAddress 一律拒绝；token 用 timingSafeEqual 比较
