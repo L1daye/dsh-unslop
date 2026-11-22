@@ -24,6 +24,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createUnslopClient } from './mcp-client.js'
 import { createHttpAuth, guarded, readJsonBody, sendJson } from './http-util.js'
+import { scanPath, normalizeImpeccable } from '../mcp/detect.mjs'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const PACKAGE_DIR = path.resolve(HERE, '..')
@@ -40,6 +41,7 @@ const SKILL_ROOT = path.join(DSH_HOME, 'skills', 'unslop')
 const INSTALL_ROOT = path.join(DSH_HOME, 'plugins-data', 'unslop')
 const BRIDGE_FILE = path.join(INSTALL_ROOT, 'bridge.json')
 const TOKEN_FILE = path.join(INSTALL_ROOT, 'http.token')
+const BASELINE_FILE = path.join(INSTALL_ROOT, 'detect-baseline.json')
 
 const SERVER_NAME = 'unslop'
 const TOOL_PREFIX = 'mcp__unslop__'
@@ -125,6 +127,8 @@ Harness the tools appear as mcp__unslop__*; if they are missing, call unslop_sta
 unslop_deps to see how to install Playwright/Chromium (only needed for snapshot and story). The
 core audit -> direction -> nine passes workflow needs no external tool. Read the references with
 the unslop_read tool (names: signs, tokens, visuals, refs, effects, rtl) rather than opening files.
+For a quantified before/after, call unslop_detect {path, action:"baseline"} before fixing and
+{action:"compare"} after; it uses the impeccable CLI if installed, else a built-in rule engine.
 unslop by Damir Sokolovsky (@heydamir), CC BY 4.0 — keep this credit. -->
 `
 
@@ -332,6 +336,73 @@ function surfaceTool(settings, hooks) {
   }
 }
 
+// ---- detector (optional impeccable CLI, else built-in rules) --------------------------------
+function readDetectBaselines() { try { return JSON.parse(fs.readFileSync(BASELINE_FILE, 'utf8')) || {} } catch { return {} } }
+function writeDetectBaselines(map) { try { fs.mkdirSync(INSTALL_ROOT, { recursive: true }); fs.writeFileSync(BASELINE_FILE, JSON.stringify(map, null, 2) + '\n') } catch { /* best effort */ } }
+
+function detectTool(settings, hooks) {
+  return {
+    name: 'unslop_detect',
+    description:
+      'Deterministically scan UI source for AI-slop tells and score it 0-100 (higher = cleaner). Prefers the impeccable CLI when installed, else a built-in rule engine — offline, no model calls. Workflow: run with action:"baseline" before fixing, fix with the unslop passes, then action:"compare" to get the score delta. path defaults to the current folder; the scan is confined to the project root.',
+    parameters: {
+      type: 'object',
+      properties: {
+        path: { type: 'string', description: 'File or directory to scan, relative to the project. Default ".".' },
+        engine: { type: 'string', enum: ['auto', 'builtin', 'impeccable'], description: 'auto (default): impeccable CLI if present, else built-in.' },
+        action: { type: 'string', enum: ['scan', 'baseline', 'compare'], description: 'scan (default) | baseline (save score) | compare (delta vs saved baseline).' },
+        maxIssues: { type: 'integer', description: 'Max issues to return (default 40, max 200).' },
+      },
+    },
+    output: {
+      schema: { type: 'object' },
+      render: (_a, v) => {
+        const lines = [`unslop_detect  score ${v.score}/100  [${v.engine}]  files=${v.files ?? '?'}  issues=${v.issueCount}  (high ${v.bySeverity.high} / med ${v.bySeverity.medium} / low ${v.bySeverity.low})  — ${v.rootLabel}`]
+        if (v.delta !== undefined) lines.push(`Δ ${v.delta >= 0 ? '+' : ''}${v.delta} vs baseline ${v.baseline.score} (${v.baseline.ts})`)
+        else if (v.baselineSaved) lines.push('· baseline saved for later compare')
+        else if (v.baselineMissing) lines.push('· no baseline saved yet (run action:"baseline" first)')
+        for (const it of (v.issues || []).slice(0, 20)) lines.push(`  - ${it.file}:${it.line} [${it.sev}] ${it.rule}: ${it.message}`)
+        if (v.issueCount > (v.issues || []).length) lines.push(`  … ${v.issueCount - (v.issues || []).length} more`)
+        return [{ type: 'text', text: lines.join('\n') }]
+      },
+    },
+    async execute(args, exec) {
+      const base = resolveBaseDir(settings, exec)
+      const rel = String(args?.path || '.')
+      const target = path.resolve(base, rel)
+      const relCheck = path.relative(base, target)
+      if (relCheck === '..' || relCheck.startsWith('..' + path.sep) || path.isAbsolute(relCheck)) throw new Error(`path escapes project root: ${rel}`)
+      if (!fs.existsSync(target)) throw new Error(`path not found: ${rel}`)
+      const maxIssues = Math.min(200, Math.max(1, Number.isFinite(args?.maxIssues) ? Math.trunc(args.maxIssues) : 40))
+      const wantEngine = String(args?.engine || 'auto')
+      const cli = wantEngine === 'builtin' ? null : which('impeccable')
+      let result = null
+      if (cli && (wantEngine === 'auto' || wantEngine === 'impeccable')) {
+        try {
+          const r = await run(cli, ['detect', target, '--json'], { timeoutMs: 120_000, signal: exec?.signal })
+          if (r.code === 0 || r.code === 2) {
+            let json = null
+            try { json = JSON.parse(r.stdout) } catch { json = null }
+            if (json) result = normalizeImpeccable(json, target)
+          }
+        } catch { /* fall back to builtin */ }
+      }
+      if (!result) result = scanPath(target)
+      const payload = { ...result, issues: result.issues.slice(0, maxIssues), rootLabel: path.relative(base, target) || '.', action: String(args?.action || 'scan') }
+      const map = readDetectBaselines()
+      if (payload.action === 'baseline') {
+        map[target] = { score: result.score, issueCount: result.issueCount, bySeverity: result.bySeverity, engine: result.engine, ts: new Date().toISOString() }
+        writeDetectBaselines(map)
+        payload.baselineSaved = true
+      } else if (payload.action === 'compare') {
+        const b = map[target]
+        if (b) { payload.baseline = b; payload.delta = result.score - b.score } else { payload.baselineMissing = true }
+      }
+      return payload
+    },
+  }
+}
+
 // ---- HTTP routes ------------------------------------------------------------------------
 function tokenRouteHandler(auth) {
   return (req, res) => sendJson(res, 200, { ok: true, token: auth.token })
@@ -490,7 +561,7 @@ export function apply(ctx, config) {
     workingDirectoryService = wdCtx.workingDirectory || null
   })
 
-  const definitions = [statusTool(settings, hooks), depsTool(settings, hooks), surfaceTool(settings, hooks)]
+  const definitions = [statusTool(settings, hooks), depsTool(settings, hooks), surfaceTool(settings, hooks), detectTool(settings, hooks)]
   ctx.effect(() => {
     const disposers = []
     try {

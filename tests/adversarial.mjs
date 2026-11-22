@@ -185,8 +185,8 @@ async function hostSuite() {
   catch (e) { ok('apply tolerates bad config types', false, e.message) }
 
   const deadline = Date.now() + 15000
-  while (Date.now() < deadline && (routes.size < 3 || tools.size < 7)) await new Promise((r) => setTimeout(r, 100))
-  ok('7 tools registered', tools.size === 7, [...tools.keys()].join(','))
+  while (Date.now() < deadline && (routes.size < 3 || tools.size < 8)) await new Promise((r) => setTimeout(r, 100))
+  ok('8 tools registered', tools.size === 8, [...tools.keys()].join(','))
   ok('3 routes registered', routes.size === 3, [...routes.keys()].join(','))
 
   // corrupt bridge.json -> status surface defaults to all (no throw)

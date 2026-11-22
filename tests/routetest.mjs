@@ -31,9 +31,9 @@ const ctx = {
 apply(ctx, { installSkillOnBoot: false })
 
 const deadline = Date.now() + 15000
-while (Date.now() < deadline && (routes.size < 3 || tools.size < 7)) await new Promise((r) => setTimeout(r, 100))
+while (Date.now() < deadline && (routes.size < 3 || tools.size < 8)) await new Promise((r) => setTimeout(r, 100))
 ok('routes registered', routes.has('/unslop/api/token') && routes.has('/unslop/api/surface'), [...routes.keys()].join(','))
-ok('mcp tools registered before surface checks', tools.size === 7, String(tools.size))
+ok('mcp tools registered before surface checks', tools.size === 8, String(tools.size))
 
 function call(handler, { method = 'GET', headers = {}, body } = {}) {
   return new Promise((resolve) => {

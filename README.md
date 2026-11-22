@@ -65,6 +65,18 @@ dsh-unslop/
 
 选择写入 `<DSH_HOME>/plugins-data/unslop/bridge.json`，**立即重注册工具、无需重启**。chip 通过 Host 半的 `/unslop/api/{token,surface}` 路由读写（每进程随机 Bearer + loopback 围栏）。也可以直接调 `unslop_surface {surface:"core"}`。
 
+## 量化检测 `unslop_detect`（可选 impeccable）
+
+一个**离线、确定性**的 slop 检测器，给界面打 **0–100 分**（越高越干净）并列出问题（`file:line` + 规则 + 说明），让"改前改后到底好多少"变成可量化：
+
+```
+unslop_detect {path:".", action:"baseline"}   # 改之前存基线
+…  用 unslop 九个 pass 修  …
+unslop_detect {path:".", action:"compare"}    # 出 Δ 分（例如 +44）
+```
+
+引擎**优先用 [impeccable](https://github.com/pbakaus/impeccable) 的 CLI**（若已安装，直接走它的 62 条规则），否则回退到**内置 ~22 条规则**——零依赖、不联网、不调模型。扫描路径限定在项目根内。内置规则覆盖：紫/蓝渐变、渐变文字、彩色发光、色晕 blob、霓虹边框、emoji 图标、大写宽字距、超重字重、玻璃拟态、呼吸动画、`transition-all`、`hover:scale`、徽章噪音、任意像素间距、营销大词、感叹号、假数据、问候标题、胶囊泛滥、过小字号、默认石墨灰等。
+
 ## 安装
 
 手工等价（和你现有 profile 一致）：

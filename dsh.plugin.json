@@ -1,6 +1,6 @@
 {
   "id": "dsh-unslop",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "unslop (github.com/heydamir/unslop) for DeepSeek Harness: a standalone MCP server that turns vibecoded, AI-looking UI into a designed interface. Exposes unslop_references / unslop_read / unslop_snapshot / unslop_story as mcp__unslop__* tools, plus unslop_status / unslop_deps, and installs the unslop workflow skill. Vendored under CC BY 4.0 with credit to Damir Sokolovsky (@heydamir).",
   "engines": {
     "dsh": ">=0.2.2-rc.1"
@@ -9,7 +9,8 @@
     "tools": [
       "unslop_status",
       "unslop_deps",
-      "unslop_surface"
+      "unslop_surface",
+      "unslop_detect"
     ],
     "mcp": [
       "unslop"

@@ -37,13 +37,14 @@ apply(ctx, { installSkillOnBoot: true })
 
 // Wait for the async MCP client start inside the effect to settle.
 const deadline = Date.now() + 15_000
-while (Date.now() < deadline && registered.size < 7) await new Promise((r) => setTimeout(r, 100))
+while (Date.now() < deadline && registered.size < 8) await new Promise((r) => setTimeout(r, 100))
 
 ok('host tool unslop_status registered', registered.has('unslop_status'))
 ok('host tool unslop_deps registered', registered.has('unslop_deps'))
 ok('host tool unslop_surface registered', registered.has('unslop_surface'))
+ok('host tool unslop_detect registered', registered.has('unslop_detect'))
 ok('mcp tool unslop_read registered', registered.has('mcp__unslop__unslop_read'), [...registered.keys()].join(','))
-ok('all seven tools registered', registered.size === 7, String(registered.size))
+ok('all eight tools registered', registered.size === 8, String(registered.size))
 ok('skill installed to DSH_HOME', fs.existsSync(path.join(tmpHome, 'skills', 'unslop', 'SKILL.md')))
 ok('skill keeps the CC BY credit', (() => {
   try { return /@heydamir/.test(fs.readFileSync(path.join(tmpHome, 'skills', 'unslop', 'SKILL.md'), 'utf8')) } catch { return false }
