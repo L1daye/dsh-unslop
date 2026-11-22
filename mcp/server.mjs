@@ -27,7 +27,7 @@ const REF_DIR = path.join(SKILL_DIR, 'references')
 const SCRIPT_DIR = path.join(SKILL_DIR, 'scripts')
 
 const PROTOCOL_VERSION = '2025-06-18'
-const SERVER_INFO = { name: 'unslop', version: '0.1.3' }
+const SERVER_INFO = { name: 'unslop', version: '0.1.4' }
 const NODE = process.execPath
 
 // ---- reference catalog -------------------------------------------------------------------

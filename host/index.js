@@ -21,10 +21,10 @@ import { spawn } from 'node:child_process'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { createUnslopClient } from './mcp-client.js'
 import { createHttpAuth, guarded, readJsonBody, sendJson } from './http-util.js'
-import { scanPath, normalizeImpeccable } from '../mcp/detect.mjs'
+import { scanPath, normalizeImpeccable, scoreItems } from '../mcp/detect.mjs'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const PACKAGE_DIR = path.resolve(HERE, '..')
@@ -90,14 +90,14 @@ function hasPlaywright() {
 }
 
 function run(command, args, options = {}) {
-  const { cwd, timeoutMs = 120_000, signal } = options
+  const { cwd, timeoutMs = 120_000, signal, env } = options
   return new Promise((resolve) => {
     const started = Date.now()
     let stdout = ''
     let stderr = ''
     let child
     try {
-      child = spawn(command, args, { cwd: cwd || undefined, env: process.env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] })
+      child = spawn(command, args, { cwd: cwd || undefined, env: env || process.env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] })
     } catch (error) {
       resolve({ code: null, stdout, stderr: String(error?.message || error), ms: 0, error: String(error?.message || error) })
       return
@@ -352,6 +352,7 @@ function detectTool(settings, hooks) {
         engine: { type: 'string', enum: ['auto', 'builtin', 'impeccable'], description: 'auto (default): impeccable CLI if present, else built-in.' },
         action: { type: 'string', enum: ['scan', 'baseline', 'compare'], description: 'scan (default) | baseline (save score) | compare (delta vs saved baseline).' },
         maxIssues: { type: 'integer', description: 'Max issues to return (default 40, max 200).' },
+        render: { type: 'boolean', description: 'Also run Playwright render checks (overflow / contrast / tiny font / tap target) on a single .html target. Requires Playwright.' },
       },
     },
     output: {
@@ -361,6 +362,8 @@ function detectTool(settings, hooks) {
         if (v.delta !== undefined) lines.push(`Δ ${v.delta >= 0 ? '+' : ''}${v.delta} vs baseline ${v.baseline.score} (${v.baseline.ts})`)
         else if (v.baselineSaved) lines.push('· baseline saved for later compare')
         else if (v.baselineMissing) lines.push('· no baseline saved yet (run action:"baseline" first)')
+        if (v.renderIssues !== undefined) lines.push(`· render 检查命中 ${v.renderIssues} 条（溢出/对比度/字号/触控）`)
+        if (v.renderNote) lines.push(`· ${v.renderNote}`)
         for (const it of (v.issues || []).slice(0, 20)) lines.push(`  - ${it.file}:${it.line} [${it.sev}] ${it.rule}: ${it.message}`)
         if (v.issueCount > (v.issues || []).length) lines.push(`  … ${v.issueCount - (v.issues || []).length} more`)
         return [{ type: 'text', text: lines.join('\n') }]
@@ -388,7 +391,32 @@ function detectTool(settings, hooks) {
         } catch { /* fall back to builtin */ }
       }
       if (!result) result = scanPath(target)
+      let renderNote = null
+      if (args?.render === true) {
+        const st = fs.statSync(target)
+        if (!st.isFile() || !/\.html?$/i.test(target)) {
+          renderNote = 'render 检查仅支持单个 .html 文件'
+        } else if (!hasPlaywright()) {
+          renderNote = 'Playwright 未安装，已跳过 render 检查'
+        } else {
+          try {
+            const env = { ...process.env, ELECTRON_RUN_AS_NODE: '1', UNSLOP_PLAYWRIGHT_HOME: path.join(INSTALL_ROOT, 'node_modules') }
+            const r = await run(NODE, [path.join(PACKAGE_DIR, 'mcp', 'render-check.mjs'), pathToFileURL(target).href], { timeoutMs: 120_000, env, signal: exec?.signal })
+            if (r.code === 0) {
+              const j = JSON.parse(r.stdout)
+              const relFile = path.relative(base, target) || path.basename(target)
+              for (const it of (j.issues || [])) result.issues.push({ file: relFile, line: 0, rule: it.rule, sev: it.sev, message: it.message, snippet: '', count: 1 })
+              const s = scoreItems(result.issues)
+              result.score = s.score; result.penalty = s.penalty; result.bySeverity = s.bySeverity; result.counts = s.counts; result.issueCount = result.issues.length
+              result.renderIssues = (j.issues || []).length
+            } else {
+              renderNote = r.code === 3 ? 'Playwright 未安装，已跳过 render 检查' : `render-check 退出码 ${r.code}`
+            }
+          } catch (e) { renderNote = 'render-check 失败: ' + String(e?.message || e) }
+        }
+      }
       const payload = { ...result, issues: result.issues.slice(0, maxIssues), rootLabel: path.relative(base, target) || '.', action: String(args?.action || 'scan') }
+      if (renderNote) payload.renderNote = renderNote
       const map = readDetectBaselines()
       if (payload.action === 'baseline') {
         map[target] = { score: result.score, issueCount: result.issueCount, bySeverity: result.bySeverity, engine: result.engine, ts: new Date().toISOString() }

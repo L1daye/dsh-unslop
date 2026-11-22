@@ -75,7 +75,9 @@ unslop_detect {path:".", action:"baseline"}   # 改之前存基线
 unslop_detect {path:".", action:"compare"}    # 出 Δ 分（例如 +44）
 ```
 
-引擎**优先用 [impeccable](https://github.com/pbakaus/impeccable) 的 CLI**（若已安装，直接走它的 62 条规则），否则回退到**内置 ~22 条规则**——零依赖、不联网、不调模型。扫描路径限定在项目根内。内置规则覆盖：紫/蓝渐变、渐变文字、彩色发光、色晕 blob、霓虹边框、emoji 图标、大写宽字距、超重字重、玻璃拟态、呼吸动画、`transition-all`、`hover:scale`、徽章噪音、任意像素间距、营销大词、感叹号、假数据、问候标题、胶囊泛滥、过小字号、默认石墨灰等。
+引擎**优先用 [impeccable](https://github.com/pbakaus/impeccable) 的 CLI**（若已安装，直接走它的 62 条规则），否则回退到**内置 ~22 条规则**——零依赖、不联网、不调模型。扫描路径限定在项目根内。内置规则覆盖：紫/蓝渐变、渐变文字、彩色发光、色晕 blob、霓虹边框、emoji 图标、大写宽字距、超重字重、玻璃拟态、`transition-all`、`hover:scale`、徽章噪音、任意像素间距、营销大词、感叹号、假数据、问候标题、胶囊泛滥、过小字号、默认石墨灰等。
+
+> **v0.1.4**：① 评分改为**饱和曲线**（不再触底成 0，中段有分辨力，另给原始 `penalty`）；② 同规则**相邻行合并**、同处**同族只计一次**（清单更真实，不再一处刷成 5 条）；③ 规则认**手写 CSS**（`backdrop-filter`、`:hover{transform:scale}`、`.logo{linear-gradient}`、`text-shadow`、`filter:blur`、负字距、数字格式混用、近似文字色过多）；④ 新增 **`render:true`**——有 Playwright 时用无头浏览器在 1440/390 两档实测**横向溢出 / 对比度<4.5 / 渲染最小字号 / 触控目标**（这些文本正则永远抓不到）。
 
 ## 安装
 

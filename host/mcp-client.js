@@ -10,7 +10,7 @@
 import { spawn } from 'node:child_process'
 
 const PROTOCOL_VERSION = '2025-06-18'
-const CLIENT_INFO = { name: 'dsh-unslop', version: '0.1.3' }
+const CLIENT_INFO = { name: 'dsh-unslop', version: '0.1.4' }
 const INIT_TIMEOUT_MS = 20_000
 const LIST_TIMEOUT_MS = 30_000
 const DEFAULT_CALL_TIMEOUT_MS = 600_000
