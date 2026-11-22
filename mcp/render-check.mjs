@@ -17,6 +17,7 @@ async function browserKit() {
 }
 
 const target = process.argv[2]
+const pageUrl = /^(?:file|https?):/i.test(String(target || '')) ? String(target) : pathToFileURL(target).href
 const widths = [[1440, 900], [390, 844]]
 const kit = await browserKit()
 if (!kit) { console.error('no playwright'); process.exit(3) }
@@ -66,7 +67,7 @@ const browser = await chromium.launch()
 try {
   for (const [w, h] of widths) {
     const page = await browser.newPage({ viewport: { width: w, height: h } })
-    await page.goto(pathToFileURL(target).href, { waitUntil: 'load' })
+    await page.goto(pageUrl, { waitUntil: 'load' })
     await page.evaluate(() => document.fonts && document.fonts.ready)
     await page.waitForTimeout(200)
     const found = await page.evaluate(auditInPage)
