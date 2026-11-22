@@ -6,21 +6,22 @@
 AGENTS.md[SG6S]: F:面向宿主 Agent 的 AOCI 使用契约，规定建立、读取与维护索引的流程和停点 | R:- | A:- | S:该 aoci 区块由工具生成维护，不得手工改写语义；冲突时以 aoci_rules 与 Guide 为准
 LICENSE[SZ3T]: F:本插件自有代码的 MIT 许可证全文 | R:- | A:- | S:-
 LICENSE-unslop-CC-BY-4.0.txt[SZ6M]: F:随包 vendored 的 unslop 技能内容所采用的 CC BY 4.0 完整法律文本 | R:code:THIRD-PARTY-NOTICES.md | A:- | S:再分发或改编 skills/unslop 内容须署名 Damir Sokolovsky 并链接回仓库，否则违反许可
-README.md[SZ6S]: F:插件总览：与 dsh-rust-anything 的架构对照、MCP 暴露面、工具面 chip、兼容矩阵、安全、安装与测试（顶部暗色 ember 横幅） | R:code:dsh.plugin.json,code:mcp/server.mjs | A:- | S:-
+README.md[SZ6S]: F:插件总览：架构对照、MCP 暴露面、工具面 chip、量化检测 unslop_detect、兼容矩阵、安全、安装与测试 | R:code:dsh.plugin.json,code:mcp/server.mjs | A:- | S:-
 THIRD-PARTY-NOTICES.md[SZ5T]: F:第三方声明，说明 unslop 技能自 heydamir/unslop vendored、CC BY 4.0 及署名要求 | R:code:LICENSE-unslop-CC-BY-4.0.txt | A:- | S:-
 client.js[EU7S]: F:输入框「工具面」chip，读取并切换 mcp__unslop__* 工具面（关闭/核心/全部），走带 Bearer 的 /unslop/api 路由 | R:code:host/index.js | A:Chip,ChipInner | S:chip 注册在 conversation.input.left 槽，经 token+surface 路由读写，切换即重注册工具
 cordis.patch.yml[FE7T]: F:插件 host 行 patch，插入 id=unslop-host 并列出 projectDir/callTimeoutMs/mcpArgs/trustedHosts 配置 | R:code:host/index.js | A:- | S:插入行 id 固定为 unslop-host，由 package.json 的 dsh.bundle.patch 引用
-dsh.plugin.json[FE7T]: F:插件清单，声明 id、version、engines 及 contributes 的 tools（3 个）、mcp、skills | R:code:package.json | A:- | S:-
+dsh.plugin.json[FE7T]: F:插件清单，声明 id、version、engines 及 contributes 的 tools（4 个）、mcp、skills | R:code:package.json | A:- | S:-
 install.ps1[OV6T]: F:Windows 安装脚本，复制包到 profile 的 node_modules、登记 dsh.profile.bundles，支持 DryRun 与 Uninstall | R:code:dsh.plugin.json | A:- | S:跳过 node_modules/.aoci/aoci 资产与 AGENTS.md；卸载时清理 skills/unslop 与 plugins-data/unslop
-package.json[FV7T]: F:npm 包元数据，type=module，exports host/client/mcp，dsh.bundle 与 dsh.client；files 含 install.ps1、tests、docs 横幅 | R:code:dsh.plugin.json,code:cordis.patch.yml | A:- | S:client 段 platform=web、immediately=true、inject @deepseek-ai/dsh-client-ui-conversation
+package.json[FV7T]: F:npm 包元数据，type=module，exports host/client/mcp，dsh.bundle 与 dsh.client；files 含 install.ps1、tests、docs、mcp/detect | R:code:dsh.plugin.json,code:cordis.patch.yml | A:- | S:client 段 platform=web、immediately=true、inject conversation UI
 
 ===/<repository>/host/===
 http-util.js[IN6S]: F:管理路由的 HTTP 外壳，含每进程随机 Bearer、loopback Host/Origin 加源地址围栏与共享辅助函数 | R:code:host/index.js | A:- | S:非 loopback 的 Host/Origin/remoteAddress 一律拒绝；token 用 timingSafeEqual 比较
-index.js[EE8L]: F:插件 Host 半，启动 MCP 客户端、按工具面注册 mcp__unslop__*、装 skill，提供 unslop_status/deps/surface 与 /unslop/api 路由 | R:code:host/mcp-client.js,code:mcp/server.mjs,code:host/http-util.js | A:apply,startClient,applySurface | S:process.execPath+ELECTRON_RUN_AS_NODE 起 server；UNSLOP_PLAYWRIGHT_HOME 指向持久目录；GET /surface 只读不重注册；surface 用 hasOwnProperty
-mcp-client.js[IN7M]: F:零依赖 stdio MCP 客户端，实现 initialize/tools/resources/prompts 与换行 JSON-RPC，含 abort 竞态与死管道防护 | R:code:mcp/server.mjs | A:createUnslopClient | S:不依赖 @deepseek-ai/dsh-mcp-client；先登记 pending 再判 abort；exit 置空 child 并吞 stdin error
+index.js[EE8L]: F:插件 Host 半，启动 MCP 客户端、按工具面注册 mcp__unslop__*、装 skill，提供 unslop_status/deps/surface/detect 与 /unslop/api 路由 | R:code:host/mcp-client.js,code:mcp/server.mjs,code:host/http-util.js | A:apply,startClient,detectTool | S:process.execPath+ELECTRON_RUN_AS_NODE；UNSLOP_PLAYWRIGHT_HOME 指向持久目录；detect 用 impeccable CLI 或内置；路径限项目根
+mcp-client.js[IN7M]: F:零依赖 stdio MCP 客户端，实现 initialize/tools/resources/prompts 与换行 JSON-RPC，含 abort 竞态与死管道防护 | R:code:mcp/server.mjs | A:createUnslopClient | S:不依赖 @deepseek-ai/dsh-mcp-client；先登记 pending 再判 abort；exit 置空 child
 
 ===/<repository>/mcp/===
-server.mjs[MN9M]: F:与宿主无关的 MCP stdio server：4 tool、6 reference、1 prompt；null 行不崩、取消杀子进程、路径收敛、Playwright 受信解析 | R:code:host/index.js | A:containPath,handle,runNode | S:非对象消息回 -32600；本地路径限项目根；子进程 cwd 固定受信目录；stdout/行缓冲有上限
+detect.mjs[KA7S]: F:离线确定性 slop 检测引擎：约 22 条规则给 UI 源码打 0-100 分并列出 file:line 问题，可把 impeccable JSON 归一 | R:code:host/index.js | A:scanPath,normalizeImpeccable,RULES | S:逐行正则匹配，每文件每规则封顶 3 条；跳过 node_modules 等；扫描路径由 host 限制在项目根
+server.mjs[MN9M]: F:与宿主无关的 MCP stdio server：4 tool、6 reference、1 prompt；null 行不崩、取消杀子进程、路径收敛、Playwright 受信解析 | R:code:host/index.js | A:containPath,handle,runNode | S:非对象消息回 -32600；本地路径限项目根；子进程 cwd 固定受信目录
 
 ===/<repository>/skills/unslop/===
 SKILL.md[SU9M]: F:unslop 技能工作流，审计 slop→定方向→九个 pass 修界面，含操作护栏与检查清单 | R:code:skills/unslop/references/signs.md,code:skills/unslop/references/tokens.md | A:Direction | S:vendored 自 heydamir/unslop，CC BY 4.0，须保留 @heydamir 署名；九个 pass 顺序固定，方向未确认前不改
