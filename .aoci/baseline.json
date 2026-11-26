@@ -1,7 +1,7 @@
 {
   "version": 1,
   "created_at": "2026-11-21T11:49:08Z",
-  "updated_at": "2026-11-22T16:20:24Z",
+  "updated_at": "2026-11-26T15:03:28Z",
   "files": {
     ".gitattributes": {
       "role": "index",
@@ -59,9 +59,9 @@
     },
     "aoci.txt": {
       "role": "index",
-      "sha256": "ed129d9fda8bd47b2bfd6161c2a13b85d250dfe3fe2709a7e3a66b539fa72099",
-      "size": 299,
-      "normalized_sha256": "ed129d9fda8bd47b2bfd6161c2a13b85d250dfe3fe2709a7e3a66b539fa72099"
+      "sha256": "6e3b564677bd41ea170daf842766fcb86c681561341d7534d97a51782c8e759c",
+      "size": 1289,
+      "normalized_sha256": "6e3b564677bd41ea170daf842766fcb86c681561341d7534d97a51782c8e759c"
     },
     "client.js": {
       "role": "index",
@@ -74,6 +74,61 @@
       "sha256": "a75a46ae9ee41cd8ba69e3ab2f74c094f8d94693a723a7663713bb58af7b39b0",
       "size": 1489,
       "normalized_sha256": "a75a46ae9ee41cd8ba69e3ab2f74c094f8d94693a723a7663713bb58af7b39b0"
+    },
+    "docs/banner-dark-ember.png": {
+      "role": "index",
+      "sha256": "3ab52ae675643f213474237ed5c85f0b3dbb92b49e767bb0f74e6b3e7b3accf3",
+      "size": 512880
+    },
+    "docs/banner-dark-giverny.png": {
+      "role": "index",
+      "sha256": "0342faf82a597ac345f771b14e4dee842b4bcfa5312d251cf0d37f4cbc01ed0b",
+      "size": 485128
+    },
+    "docs/banner-dark-japanese-bridge.png": {
+      "role": "index",
+      "sha256": "de16cbc0c5e14e53aee434361eb891e7e2fc640bbe9644f24d1b0ee5faf87224",
+      "size": 507052
+    },
+    "docs/banner-dark-lavender.png": {
+      "role": "index",
+      "sha256": "9adbad51a7776929f443323163d185c80ef7f412b662530e10a9b9247d404409",
+      "size": 531237
+    },
+    "docs/banner-dark-sunrise.png": {
+      "role": "index",
+      "sha256": "3ace8614f24c6eff1b64962f1576d7b6406cc2c41e4f1216994fcafea19ac293",
+      "size": 531614
+    },
+    "docs/banner-dark-water-lilies.png": {
+      "role": "index",
+      "sha256": "9bfa690c99cbb9b7b98886cba9447873aaa6cae631778d80146ed813e7c2c66b",
+      "size": 515641
+    },
+    "docs/banner-monet-giverny-garden.png": {
+      "role": "index",
+      "sha256": "5691d6b9637c3654aab4a720772a2d69664e82be55f0ded85afc5b9d5ba4b395",
+      "size": 572517
+    },
+    "docs/banner-monet-japanese-bridge.png": {
+      "role": "index",
+      "sha256": "b146cbb440e9ff66888dc6cf6f1f73f6ce178347b5aebcb14e6abe8154707dec",
+      "size": 569989
+    },
+    "docs/banner-monet-lavender-haystacks.png": {
+      "role": "index",
+      "sha256": "6ad3ed225f0f025c962984cac28a533bca6545c5ed868abf8101ef340b28305c",
+      "size": 566526
+    },
+    "docs/banner-monet-sunrise.png": {
+      "role": "index",
+      "sha256": "bc09c6e8d0ffecdd89525c34a678096165fd7c1b9a76d9efdbce2af589aee9c6",
+      "size": 567691
+    },
+    "docs/banner-monet-water-lilies.png": {
+      "role": "index",
+      "sha256": "73c8b73e241d3f26fdfa4876b474c5f9f803dd5efb67c69aa1bacfb500962492",
+      "size": 576054
     },
     "dsh.plugin.json": {
       "role": "index",
@@ -230,7 +285,7 @@
     "version": "managed-scope-baseline/v1",
     "policy_identity": "e0f548d87fe5462c412a1c54409871a60ddf2ae5c30609258ff8739fdfcc8e76",
     "observe_change_policy": "review_required",
-    "budget_policy_identity": "15e9b37a6c57e9bf03c9df3d0d049eb5b9a7f5540f9d34960408114e2538a32d",
+    "budget_policy_identity": "078042c55acc9e42ed4d11f2392e0d2260ce9e8fb3adca320fdcab2f99b77e02",
     "budget_policy": {
       "version": "cognition-budget-policy/v1",
       "mode": "enforce",
@@ -243,52 +298,52 @@
         {
           "min_c": 1,
           "max_c": 4,
-          "target_tokens": 25,
-          "max_tokens": 50
+          "target_tokens": 60,
+          "max_tokens": 100
         },
         {
           "min_c": 5,
           "max_c": 7,
-          "target_tokens": 45,
-          "max_tokens": 90
+          "target_tokens": 110,
+          "max_tokens": 180
         },
         {
           "min_c": 8,
           "max_c": 8,
-          "target_tokens": 70,
-          "max_tokens": 140
+          "target_tokens": 170,
+          "max_tokens": 280
         },
         {
           "min_c": 9,
           "max_c": 9,
-          "target_tokens": 90,
-          "max_tokens": 180
+          "target_tokens": 220,
+          "max_tokens": 360
         }
       ],
       "s": [
         {
           "min_c": 1,
           "max_c": 4,
-          "target_tokens": 20,
-          "max_tokens": 40
+          "target_tokens": 60,
+          "max_tokens": 100
         },
         {
           "min_c": 5,
           "max_c": 7,
-          "target_tokens": 40,
-          "max_tokens": 80
+          "target_tokens": 120,
+          "max_tokens": 200
         },
         {
           "min_c": 8,
           "max_c": 8,
-          "target_tokens": 70,
-          "max_tokens": 140
+          "target_tokens": 200,
+          "max_tokens": 320
         },
         {
           "min_c": 9,
           "max_c": 9,
-          "target_tokens": 100,
-          "max_tokens": 200
+          "target_tokens": 260,
+          "max_tokens": 420
         }
       ]
     },

@@ -1,7 +1,7 @@
 #AOCI-ROOT-MANIFEST: 1
 #Format-Version: cognition-volumes/v1
 #Locale: zh-CN
-#Project: dsh-unslop
-#Global-Invariants: -
+#Project: dsh-unslop：把 heydamir/unslop 的设计技能接进 DeepSeek Harness 的 MCP 插件——独立 stdio MCP server（4 工具/6 参考/1 prompt）经 Host 桥接为 mcp__unslop__*，配工具面 chip、unslop_detect 量化检测（含 render 渲染级检查）与 workflow skill。
+#Global-Invariants: MCP 协议层的 stdout 只写 JSON-RPC，日志一律走 stderr；非对象/畸形消息回 -32600，不得崩溃。 所有工具与管理路由的本地路径必须收敛在项目根内，.. 与绝对路径越界一律拒绝。 /unslop/api/* 必须同时通过 Host/Origin 与回环 remoteAddress 校验，Bearer 用 timingSafeEqual 比较。 子进程一律 argv 数组直传、不经 shell；Playwright 只从插件目录与 UNSLOP_PLAYWRIGHT_HOME 解析，cwd 固定为受信目录。 外部依赖（Playwright / impeccable / ffmpeg）必须可选且可降级：缺失时核心离线流程仍可运行。 vendored 的 skills/unslop 遵循 CC BY 4.0，任何再分发或改编须保留 @heydamir 署名与 NOTICE。
 #Volume: id=meta kind=meta path=aoci.meta.txt format=meta-v1 depends=- state=enabled
 #Volume: id=code kind=code path=aoci.code.txt format=object-fras-v2 depends=meta state=enabled
